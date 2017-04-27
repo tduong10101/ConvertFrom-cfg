@@ -21,8 +21,7 @@ function ConvertFrom-Cfg{
         [Parameter(Mandatory=$True,Position=1,ValueFromPipeline=$true)]
         [Object[]] $cfg
     )
-    process {
-        $cfg = $cfg -replace ".*#+.*"
+    process { $cfg = $cfg -replace ".*#+.*"
         $cfg = $cfg -replace "^define[\w|\W]*{$", "{"
         $cfg = $cfg |? {![string]::IsNullOrEmpty($_)}
         $returnobj=@()

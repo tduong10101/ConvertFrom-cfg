@@ -16,35 +16,29 @@
 # $cfgobj = ConvertFrom-Cfg -cfg $cfgtxt
 #
 #################################################################### 
-param(
-    [Parameter(Mandatory=$True,Position=1,ValueFromPipeline=$true,
-        ValueFromPipelineByPropertyName=$true)]
-    [string] $cfg
-)
-
-process {
-    $cfg = $cfg -replace ".*#+.*"
-    $cfg = $cfg -replace "^define[\w|\W]*{", "{"
-    $cfg = $cfg |? {![string]::IsNullOrEmpty($_)}
-    $returnobj = @()
-    foreach ($line in $cfg){
-        if ($line -match "{"){        
-            $object= New-Object psobject |
-                Add-Member NoteProperty "contactgroup_name" $null -PassThru | 
-                Add-Member NoteProperty "alias" $null -PassThru |
-                Add-Member NoteProperty "members" $null -PassThru |
-                Add-Member NoteProperty "contactgroup_members" $null -PassThru 
-            continue
+function ConvertFrom-Cfg{
+    param(
+        [Parameter(Mandatory=$True,Position=1,ValueFromPipeline=$true)]
+        [Object[]] $cfg
+    )
+    process {
+        #$cfg = Get-Content "C:\Users\terry.duong\Dropbox\Stuff\NagiosContact\shared_cfg\contactgroups.cfg"
+        $cfg = $cfg -replace ".*#+.*"
+        $cfg = $cfg -replace "^define[\w|\W]*{$", "{"
+        $cfg = $cfg |? {![string]::IsNullOrEmpty($_)}
+        $returnobj=@()
+        foreach ($line in $cfg){
+            if ($line -match "^{$"){        
+                $object= New-Object psobject
+            }
+            elseif ($line -match "^}$"){
+                $returnobj+=$object
+            }else{
+                $value = $line.trim() -split "\s{2,}"
+                $object| Add-Member NoteProperty $value[0] $value[-1]
+            }
+           
         }
-        elseif ($line -match "}"){
-            #$psobject2 = $psobject2+$object
-            $returnobj+=$object
-            continue
-        }
-        $splitvalue = $line.trim() -split "\s{2,}"
-        $object."$($splitvalue[0])" = $splitvalue[-1]
+        return @($returnobj)
     }
-
-    return $returnobj|fl
 }
-
